@@ -1,0 +1,67 @@
+{
+  "name": "jffpm",
+  "version": "0.1.0",
+  "description": "🤣 Just-for-fun package manager",
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "package",
+    "manager",
+    "package-manager",
+    "fun",
+    "nestjs",
+    "nest-commander"
+  ],
+  "homepage": "https://github.com/ItzNeviKat/jffpm#readme",
+  "bugs": "https://github.com/ItzNeviKat/jffpm/issues",
+  "repository": "https://github.com/ItzNeviKat/jffpm",
+  "license": "MIT",
+  "author": "Nikita Koshelenko <nikitakoschelenko@gmail.com>",
+  "bin": {
+    "jff": "./dist/main.js",
+    "jffpm": "./dist/main.js",
+    "jpm": "./dist/main.js"
+  },
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "prebuild": "node_modules/rimraf/bin.js dist",
+    "build": "chmod +x node_modules/@nestjs/cli/bin/nest.js && node_modules/@nestjs/cli/bin/nest.js build",
+    "dev": "chmod +x node_modules/ts-node/dist/bin.js && node_modules/ts-node/dist/bin.js src/main.ts",
+    "lint": "node_modules/eslint/bin/eslint.js \"src/**/*.ts\" --fix",
+    "start": "node dist/main"
+  },
+  "dependencies": {
+    "@nestjs/common": "^8.0.0",
+    "@nestjs/core": "^8.0.0",
+    "colors": "^1.4.0",
+    "nest-commander": "^2.5.0",
+    "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
+    "rxjs": "^7.2.0",
+    "semver": "^7.3.7",
+    "tar": "^6.1.11",
+    "undici": "^5.0.0",
+    "yaml": "^2.0.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^8.0.0",
+    "@nestjs/schematics": "^8.0.0",
+    "@types/node": "^16.0.0",
+    "@types/semver": "^7.3.9",
+    "@types/tar": "^6.1.1",
+    "@typescript-eslint/eslint-plugin": "^4.28.2",
+    "@typescript-eslint/parser": "^4.28.2",
+    "eslint": "^7.30.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "prettier": "^2.3.2",
+    "ts-node": "^10.0.0",
+    "tsconfig-paths": "^3.10.1",
+    "type-fest": "^2.12.2",
+    "typescript": "^4.3.5"
+  }
+}
