@@ -17,10 +17,10 @@ Inspired by **Yarn v1** and an [article on Habr](https://habr.com/ru/company/tim
 
 ## Installation
 ```bash
-$ npm install jffpm
+$ npm install -g jffpm
 ```
 ```bash
-$ yarn add jffpm
+$ yarn global add jffpm
 ```
 
 ## Help
