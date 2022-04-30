@@ -26,10 +26,10 @@
     "/dist"
   ],
   "scripts": {
-    "prebuild": "node_modules/rimraf/bin.js dist",
-    "build": "chmod +x node_modules/@nestjs/cli/bin/nest.js && node_modules/@nestjs/cli/bin/nest.js build",
-    "dev": "chmod +x node_modules/ts-node/dist/bin.js && node_modules/ts-node/dist/bin.js src/main.ts",
-    "lint": "node_modules/eslint/bin/eslint.js \"src/**/*.ts\" --fix",
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "dev": "ts-node src/main.ts",
+    "lint": "eslint \"src/**/*.ts\" --fix",
     "start": "node dist/main"
   },
   "dependencies": {
