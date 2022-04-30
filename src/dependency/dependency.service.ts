@@ -76,12 +76,12 @@ export class DependencyService {
     let version: string;
     let url: string;
     let shasum: string;
-    let dependencies: PackageJson.Dependency | undefined;
+    let dependencies: PackageJson.Dependency;
 
     if (fromLockfile) {
       version = fromLockfile.version;
       url = fromLockfile.url;
-      dependencies = fromLockfile.dependencies;
+      dependencies = fromLockfile.dependencies ?? {};
       shasum = fromLockfile.shasum;
     } else {
       try {
@@ -107,7 +107,7 @@ export class DependencyService {
         }
 
         url = manifest.versions[version].dist.tarball;
-        dependencies = manifest.versions[version].dependencies;
+        dependencies = manifest.versions[version].dependencies ?? {};
         shasum = manifest.versions[version].dist.shasum;
       } catch (e) {
         this.logger.newline();
@@ -117,15 +117,15 @@ export class DependencyService {
       }
     }
 
-    if (!dependencies || Object.keys(dependencies).length === 0)
-      dependencies = void 0;
-
-    this.lockfileService.setItem(name, range, {
+    const item: LockfileItem = {
       version,
       url,
       dependencies,
       shasum
-    });
+    };
+    if (!Object.keys(dependencies).length) delete item.dependencies;
+
+    this.lockfileService.setItem(name, range, item);
 
     if (list[name] && !satisfies(list[name].version, range)) {
       if (parent) {
