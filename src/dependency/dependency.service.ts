@@ -12,7 +12,6 @@ import { LockfileItem } from 'src/lockfile/interfaces/lockfile.interface';
 
 import { AppLogger } from '../app.logger';
 import { LockfileService } from '../lockfile/lockfile.service';
-import { PackageService } from '../package/package.service';
 import { PackageManifest } from '../registry/interfaces/package-manifest.interface';
 import { RegistryService } from '../registry/registry.service';
 
@@ -32,7 +31,6 @@ export class DependencyService {
 
   constructor(
     private lockfileService: LockfileService,
-    private packageService: PackageService,
     private registryService: RegistryService
   ) {}
 
@@ -99,7 +97,7 @@ export class DependencyService {
 
           if (!max) {
             this.logger.newline();
-            this.logger.error(`error resolving version of ${name}`);
+            this.logger.error(`resolving version of ${name}`);
 
             process.exit(-1);
           }
@@ -111,7 +109,7 @@ export class DependencyService {
         shasum = manifest.versions[version].dist.shasum;
       } catch (e) {
         this.logger.newline();
-        this.logger.error(`fetching ${name}@${range} dependency`);
+        this.logger.error(`fetching ${name}@${range} dependency:`, e);
 
         process.exit(-1);
       }
@@ -171,7 +169,7 @@ export class DependencyService {
     list: DependencyList,
     unsatisfied: UnsatisfiedDependency[],
     force?: boolean
-  ): Promise<void> {
+  ): Promise<boolean> {
     let alreadyUpToDate: boolean = true;
 
     const installedDependencies: string[] = [];
@@ -251,6 +249,8 @@ export class DependencyService {
       );
       this.logger.newline();
     }
+
+    return alreadyUpToDate;
   }
 
   private async installDependency(

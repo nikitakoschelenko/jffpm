@@ -5,6 +5,7 @@ import { PackageJson } from 'type-fest';
 
 import { DependencyService } from '../dependency/dependency.service';
 import { PackageService } from '../package/package.service';
+import { PostinstallService } from '../postinstall/postinstall.service';
 
 import { PrepareCommandOptions } from './interfaces/prepare-command-options.interface';
 
@@ -15,8 +16,9 @@ import { PrepareCommandOptions } from './interfaces/prepare-command-options.inte
 })
 export class PrepareCommand implements CommandRunner {
   constructor(
+    private packageService: PackageService,
     private dependencyService: DependencyService,
-    private packageService: PackageService
+    private postinstallService: PostinstallService
   ) {}
 
   async run(inputs: string[], options: PrepareCommandOptions): Promise<void> {
@@ -33,12 +35,21 @@ export class PrepareCommand implements CommandRunner {
       dependencies
     );
 
-    await this.dependencyService.install(list, unsatisfied, options.force);
+    const alreadyUpToDate: boolean = await this.dependencyService.install(
+      list,
+      unsatisfied,
+      options.force
+    );
 
     this.packageService.writePackageJson(
       path,
       this.packageService.sortDependencies(packageJson)
     );
+
+    if (!alreadyUpToDate)
+      await this.postinstallService.installBinaries(
+        resolve(process.cwd(), 'node_modules')
+      );
   }
 
   @Option({

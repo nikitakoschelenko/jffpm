@@ -6,10 +6,11 @@ import {
 
 import { AddModule } from './add/add.module';
 import { AppLogger } from './app.logger';
+import { PostinstallModule } from './postinstall/postinstall.module';
 import { PrepareModule } from './prepare/prepare.module';
 
 @Module({
-  imports: [PrepareModule, AddModule]
+  imports: [PrepareModule, AddModule, PostinstallModule]
 })
 export class AppModule
   implements OnApplicationBootstrap, OnApplicationShutdown

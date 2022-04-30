@@ -5,6 +5,7 @@ import { PackageJson } from 'type-fest';
 
 import { DependencyService } from '../dependency/dependency.service';
 import { PackageService } from '../package/package.service';
+import { PostinstallService } from '../postinstall/postinstall.service';
 
 import { AddCommandOptions } from './interfaces/add-command-options.interface';
 
@@ -15,8 +16,9 @@ import { AddCommandOptions } from './interfaces/add-command-options.interface';
 })
 export class AddCommand implements CommandRunner {
   constructor(
+    private packageService: PackageService,
     private dependencyService: DependencyService,
-    private packageService: PackageService
+    private postinstallService: PostinstallService
   ) {}
 
   async run(inputs: string[], options: AddCommandOptions): Promise<void> {
@@ -33,7 +35,7 @@ export class AddCommand implements CommandRunner {
           .map(([name, range]) => [
             name,
             // TODO: this needs to be rewritten
-            !range || range === 'latest' ? '' : range
+            !range ? 'latest' : range
           ])
       )
     };
@@ -42,7 +44,10 @@ export class AddCommand implements CommandRunner {
       dependencies
     );
 
-    await this.dependencyService.install(list, unsatisfied);
+    const alreadyUpToDate: boolean = await this.dependencyService.install(
+      list,
+      unsatisfied
+    );
 
     const key = options.dev
       ? 'devDependencies'
@@ -56,7 +61,9 @@ export class AddCommand implements CommandRunner {
         Object.entries(dependencies)
           .map(([name, range]) => [
             name,
-            range || (list[name] ? `^${list[name].version}` : null)
+            // TODO: this needs to be rewritten
+            (range === 'latest' ? false : range) ||
+              (list[name] ? `^${list[name].version}` : null)
           ])
           .filter(([name, range]) => name && range)
       )
@@ -66,6 +73,11 @@ export class AddCommand implements CommandRunner {
       path,
       this.packageService.sortDependencies(packageJson)
     );
+
+    if (!alreadyUpToDate)
+      await this.postinstallService.installBinaries(
+        resolve(process.cwd(), 'node_modules')
+      );
   }
 
   @Option({
