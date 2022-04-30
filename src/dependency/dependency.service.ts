@@ -1,6 +1,7 @@
 import { Hash, createHash } from 'crypto';
 import { existsSync, mkdirSync } from 'fs';
 import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 
 import { Injectable } from '@nestjs/common';
 import { maxSatisfying, satisfies } from 'semver';
@@ -11,6 +12,7 @@ import { LockfileItem } from 'src/lockfile/interfaces/lockfile.interface';
 
 import { AppLogger } from '../app.logger';
 import { LockfileService } from '../lockfile/lockfile.service';
+import { PackageService } from '../package/package.service';
 import { PackageManifest } from '../registry/interfaces/package-manifest.interface';
 import { RegistryService } from '../registry/registry.service';
 
@@ -30,6 +32,7 @@ export class DependencyService {
 
   constructor(
     private lockfileService: LockfileService,
+    private packageService: PackageService,
     private registryService: RegistryService
   ) {}
 
@@ -166,7 +169,8 @@ export class DependencyService {
 
   async install(
     list: DependencyList,
-    unsatisfied: UnsatisfiedDependency[]
+    unsatisfied: UnsatisfiedDependency[],
+    force?: boolean
   ): Promise<void> {
     let alreadyUpToDate: boolean = true;
 
@@ -182,7 +186,11 @@ export class DependencyService {
         const percent: number = Math.floor((+current / total) * 100);
         this.logger.update(`installing ${percent}%`.blue, name);
 
-        const installed: boolean = await this.installDependency(name, item);
+        const installed: boolean = await this.installDependency(
+          name,
+          item,
+          force
+        );
         if (installed) {
           installedDependencies.push(`${name}@${item.version}`);
           alreadyUpToDate = false;
@@ -206,7 +214,8 @@ export class DependencyService {
 
         const installed: boolean = await this.installDependency(
           dependency.name,
-          dependency
+          dependency,
+          force
         );
         if (installed) {
           installedDependencies.push(
@@ -246,7 +255,8 @@ export class DependencyService {
 
   private async installDependency(
     name: string,
-    dependency: DependencyListItem | UnsatisfiedDependency
+    dependency: DependencyListItem | UnsatisfiedDependency,
+    force?: boolean
   ): Promise<boolean> {
     const path: string = isUnsatisfiedDependency(dependency)
       ? `${process.cwd()}/node_modules/${dependency.parent}/node_modules/${
@@ -255,35 +265,28 @@ export class DependencyService {
       : `${process.cwd()}/node_modules/${name}`;
 
     try {
-      // TODO: add shasum check
-      if (existsSync(path)) return false;
+      if (!force && existsSync(path)) return false;
 
       mkdirSync(path, { recursive: true });
 
       const readable: Readable = await this.registryService.fetchTarball(
         dependency.url
       );
+      const hasher: Hash = createHash('sha1');
 
-      const hash: Hash = createHash('sha1');
+      await Promise.all([
+        pipeline(readable, hasher),
+        pipeline(readable, extract({ cwd: path, strip: 1 }))
+      ]);
 
-      readable.on('data', (chunk: Uint8Array) => {
-        hash.update(chunk);
-      });
+      if (hasher.digest('hex') !== dependency.shasum) {
+        this.logger.newline();
+        this.logger.error(
+          `${name}@${dependency.version} dependency shasums do not match`
+        );
 
-      readable.on('end', () => {
-        const hex: string = hash.digest('hex');
-
-        if (hex !== dependency.shasum) {
-          this.logger.newline();
-          this.logger.error(
-            `${name}@${dependency.version} dependency shasums do not match`
-          );
-
-          process.exit(-1);
-        }
-      });
-
-      readable.pipe(extract({ cwd: path, strip: 1 }));
+        process.exit(-1);
+      }
     } catch (e) {
       this.logger.newline();
       this.logger.error(

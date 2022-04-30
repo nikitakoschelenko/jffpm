@@ -1,5 +1,4 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
 
 import { Injectable } from '@nestjs/common';
 import { PackageJson } from 'type-fest';
@@ -10,17 +9,15 @@ import { AppLogger } from '../app.logger';
 export class PackageService {
   private logger: AppLogger = new AppLogger();
 
-  private path: string = resolve(process.cwd(), 'package.json');
-
-  readPackageJson(): PackageJson {
-    if (!existsSync(this.path)) {
+  readPackageJson(path: string): PackageJson {
+    if (!existsSync(path)) {
       this.logger.error('no package.json file found');
 
       process.exit(-1);
     }
 
     try {
-      const raw: string = readFileSync(this.path, { encoding: 'utf-8' });
+      const raw: string = readFileSync(path, { encoding: 'utf-8' });
 
       return JSON.parse(raw);
     } catch (e) {
@@ -30,8 +27,8 @@ export class PackageService {
     }
   }
 
-  writePackageJson(packageJson: PackageJson): void {
-    if (!existsSync(this.path)) {
+  writePackageJson(path: string, packageJson: PackageJson): void {
+    if (!existsSync(path)) {
       this.logger.error('no package.json file found');
 
       process.exit(-1);
@@ -40,7 +37,7 @@ export class PackageService {
     try {
       const raw: string = JSON.stringify(packageJson, null, 2);
 
-      writeFileSync(this.path, raw, { encoding: 'utf-8' });
+      writeFileSync(path, raw, { encoding: 'utf-8' });
     } catch (e) {
       this.logger.error('writing package.json file:', e);
 

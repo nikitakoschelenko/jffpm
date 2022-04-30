@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 
 import { LockfileModule } from '../lockfile/lockfile.module';
+import { PackageModule } from '../package/package.module';
 import { RegistryModule } from '../registry/registry.module';
 
 import { DependencyService } from './dependency.service';
 
 @Module({
-  imports: [LockfileModule, RegistryModule],
+  imports: [LockfileModule, PackageModule, RegistryModule],
   providers: [DependencyService],
   exports: [DependencyService]
 })

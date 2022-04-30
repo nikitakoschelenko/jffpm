@@ -1,3 +1,5 @@
+import { resolve } from 'path';
+
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { PackageJson } from 'type-fest';
 
@@ -18,7 +20,8 @@ export class AddCommand implements CommandRunner {
   ) {}
 
   async run(inputs: string[], options: AddCommandOptions): Promise<void> {
-    const packageJson: PackageJson = this.packageService.readPackageJson();
+    const path: string = resolve(process.cwd(), 'package.json');
+    const packageJson: PackageJson = this.packageService.readPackageJson(path);
 
     const dependencies: PackageJson.Dependency = {
       ...packageJson.dependencies,
@@ -60,6 +63,7 @@ export class AddCommand implements CommandRunner {
     };
 
     this.packageService.writePackageJson(
+      path,
       this.packageService.sortDependencies(packageJson)
     );
   }
@@ -67,7 +71,7 @@ export class AddCommand implements CommandRunner {
   @Option({
     name: 'dev',
     description: 'Install as dev dependency',
-    flags: '-d, --dev',
+    flags: '-D, --dev',
     defaultValue: false
   })
   parseDev(): boolean {

@@ -1,3 +1,5 @@
+import { resolve } from 'path';
+
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { PackageJson } from 'type-fest';
 
@@ -18,7 +20,8 @@ export class PrepareCommand implements CommandRunner {
   ) {}
 
   async run(inputs: string[], options: PrepareCommandOptions): Promise<void> {
-    const packageJson: PackageJson = this.packageService.readPackageJson();
+    const path: string = resolve(process.cwd(), 'package.json');
+    const packageJson: PackageJson = this.packageService.readPackageJson(path);
 
     const dependencies: PackageJson.Dependency = {
       ...packageJson.dependencies,
@@ -30,9 +33,10 @@ export class PrepareCommand implements CommandRunner {
       dependencies
     );
 
-    await this.dependencyService.install(list, unsatisfied);
+    await this.dependencyService.install(list, unsatisfied, options.force);
 
     this.packageService.writePackageJson(
+      path,
       this.packageService.sortDependencies(packageJson)
     );
   }
@@ -54,6 +58,16 @@ export class PrepareCommand implements CommandRunner {
     defaultValue: false
   })
   parsePeer(): boolean {
+    return true;
+  }
+
+  @Option({
+    name: 'force',
+    description: 'Force reinstall dependencies',
+    flags: '-f, --force',
+    defaultValue: false
+  })
+  parseForce(): boolean {
     return true;
   }
 }
